@@ -64,6 +64,7 @@ def handle_client(client_socket, client_address):
             if sock == client_socket:
                 del clients[name]
                 print(f"Користувач {name} відключився.")
+                logging.info(f"Користувач {name} відключився")
                 break
         client_socket.close()
 
