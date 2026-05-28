@@ -21,7 +21,16 @@ clients = {}
 def handle_client(client_socket, client_address):
     try:
         # Отримуємо ім'я користувача при підключенні
-        username = client_socket.recv(1024).decode('utf-8')
+        run = True
+        while run:
+            username = client_socket.recv(1024).decode('utf-8')
+            if username in clients:
+                print("1")
+                client_socket.send("1".encode('utf-8'))
+            else:
+                print("0")
+                client_socket.send("0".encode('utf-8'))
+                run = False
         clients[username] = client_socket
         print(f"Користувач {username} підключився")
         logging.info(f"Користувач {username} підключився")
@@ -54,7 +63,11 @@ def handle_client(client_socket, client_address):
                 
                 clients[recipient].sendall(header + message_bytes)
             else:
-                client_socket.send(f"Помилка: Користувач {recipient} не знайдений.".encode('utf-8'))
+                messeg = {"Від кого": "server", "text": f"Помилка: Користувач {recipient} не знайдений.", "file": None, "name": None}
+                json_str = json.dumps(messeg)
+                message_bytes = json_str.encode("utf-8")
+                header = len(message_bytes).to_bytes(4, byteorder="big")
+                client_socket.sendall(header + message_bytes)
 
     except ConnectionResetError:
         pass
