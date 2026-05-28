@@ -25,10 +25,8 @@ def handle_client(client_socket, client_address):
         while run:
             username = client_socket.recv(1024).decode('utf-8')
             if username in clients:
-                print("1")
                 client_socket.send("1".encode('utf-8'))
             else:
-                print("0")
                 client_socket.send("0".encode('utf-8'))
                 run = False
         clients[username] = client_socket
