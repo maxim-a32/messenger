@@ -30,9 +30,10 @@ def receive_messages(client_socket, conn, cursor):
                     break
                 data += packet
             message = json.loads(data.decode("utf-8"))
+            text = message['text'] + "\n"
             print(f"\n{message['Від кого']}:{message['text']}\n")
             logging.info("Прийшло повідомлення")
-            cursor.execute('INSERT INTO messages (name, text) VALUES(?, ?)', (message['Від кого'], message['text']))
+            cursor.execute('INSERT INTO messages (name, text) VALUES(?, ?)', (message['Від кого'], text))
             conn.commit()
             try:
                 decoded_data = base64.b64decode(message["file"])
@@ -45,7 +46,7 @@ def receive_messages(client_socket, conn, cursor):
         except:
             break
 
-def main():
+def main(username):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((HOST, PORT))
 
@@ -61,9 +62,9 @@ def main():
     conn.commit()
 
     # Реєстрація на сервері
-    i = input("ведіть 1 щоб написати ім'я чи будьщо інше щоб було останне використане")
-    if i == "1":
-        username = input("Введіть ваше ім'я: ")
+    #i = input("ведіть 1 щоб написати ім'я чи будьщо інше щоб було останне використане")
+    if username != "":
+        #username = input("Введіть ваше ім'я: ")
         client_name = {"name": username}
     else:
         try:
@@ -71,50 +72,46 @@ def main():
                 client_name = json.load(file)
             username = client_name["name"]
         except:
-            username = input("попередне ім'я не знайдено будьласка введіть нове")
-            client_name = {"name": username}
+            return 0, conn, client, cursor
+    state = Connection(username, client, conn, cursor, client_name)
+    return state, conn, client, cursor
+        
+def Connection(username, client, conn, cursor, client_name):
     client.send(username.encode('utf-8'))
-    run = True
-    while run:
-        i = client.recv(1024).decode('utf-8')
-        if i == "1":
-            username = input("користувач з таким ім'ям вже існує будьласка ведіть нове ім'я")
-            client.send(username.encode('utf-8'))
-        else:
-            with open("client_name.json", "w+", encoding="utf-8") as file:
-                json.dump(client_name, file, ensure_ascii=False)
-            run = False
+    i = client.recv(1024).decode('utf-8')
+    if i == "1":
+        return 2
+        #client.send(username.encode('utf-8'))
+    else:
+        with open("client_name.json", "w+", encoding="utf-8") as file:
+            json.dump(client_name, file, ensure_ascii=False)
 
     # Запуск потоку для отримання повідомлень
     thread = threading.Thread(target=receive_messages, args=(client, conn, cursor,))
     thread.daemon = True
     thread.start()
+    return 1
 
-    print("Для виходу натисніть Ctrl+C")
-    try:
-        run = True
-        while run:
-            i = input("натисніть ентер щоб написати повідомлення обо ведіть 1 щоб переглянюти попередні повідомлення")
-            if i == "1":
-                history(conn, cursor)
-            else:
-                run = messeg(client, conn)
-    except KeyboardInterrupt:
-        conn.close()
-        client.close()
+    #print("Для виходу натисніть Ctrl+C")
+    #try:
+    #    run = True
+    #    while run:
+    #        i = input("натисніть ентер щоб написати повідомлення обо ведіть 1 щоб переглянюти попередні повідомлення")
+    #        if i == "1":
+    #            history(conn, cursor)
+    #        else:
+    #            run = messeg(client, conn)
+    #except KeyboardInterrupt:
+    #    conn.close()
+    #    client.close()
     # Створення і відправка повідомлень
-def messeg(client, conn):
+def messeg(client, conn, user, text, file):
     try:
-        user = input("ведіть отримувача")
-        text = input("ведіть текст повдомлення")
-        filee = input("якщо бажаєте відправити фаїл то натисніть 1 якщо ні то будьщо інше")
-        if filee == "1":
-            file = input("скопіюйте і вставте повний шлях до файла який бажаєте відправити")
+        if file:
             with open(file, "rb") as fille:
                 binary_data = fille.read()
                 encoded_string = base64.b64encode(binary_data).decode("utf-8")
             file_name, extension = os.path.splitext(file)
-            print(file_name)
             filee_name = os.path.basename(file_name)
             FILE = filee_name + extension
         else:
@@ -135,10 +132,13 @@ def history(conn, cursor):
     try:
         cursor.execute("SELECT name, text FROM messages")
         rows = cursor.fetchall()
+        data = ""
         for row in rows:
-            print(f"Від кого: {row[0]} повідомлення: {row[1]}")
+            i = f"Від кого: {row[0]} повідомлення: {row[1]}"
+            data += i
+        return data
     except:
-        print("повідомлень немає")
+        return "повідомлень немає"
 
 if __name__ == "__main__":
     main()
