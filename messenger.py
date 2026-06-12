@@ -12,9 +12,10 @@ logging.basicConfig(
     encoding="utf-8",
     format="%(asctime)s - %(levelname)s - %(message)s")
 
-class Play:
+class Play(ctk.CTk):
     file_path = None
     def __init__(self):
+        super().__init__()
         try:
             with open("settings.json", "r", encoding="utf-8") as file:
                 settings = json.load(file)
@@ -34,17 +35,15 @@ class Play:
         self.app = ctk.CTk(fg_color=self.fon)
         self.app.title("Месенджер")
         self.app.geometry(size)
-        self.state = 1
+        self.app_state = 1
         self.main_frame = ctk.CTkFrame(self.app, fg_color="transparent")
         self.main_frame.pack(pady=20, padx=20, fill="both", expand=True)
 
-        # Лівa рамка
         self.top_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.top_frame.pack(side="top")
         self.left_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.left_frame.pack(side="left", padx=(0, 20))
 
-        # Права рамка
         self.right_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.right_frame.pack(side="right")
         self.bottom_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
@@ -52,7 +51,6 @@ class Play:
 
         self.Right_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
         self.Right_frame.pack(side="right", padx=(0, 10))
-        #self.app.mainloop()
     def Start(self):
         try:
             self.color = ctk.StringVar(value=self.fon)
@@ -105,28 +103,26 @@ class Play:
         self.Button_setings = ctk.CTkButton(self.left_frame, text="налаштування", fg_color=self.buton_color, text_color=self.Text_Color, command=lambda: self.settings())
         
         self.PLAY()
-        #self.app.mainloop()
     def PLAY(self):
-        logging.info("Додаток запущено")
-        self.app.mainloop()
-        logging.info("Додаток вимкнено")
-        try:
-            client.close()
-            conn.close()
-        except:
-            pass
+        if __name__ == "__main__":
+            logging.info("Додаток запущено")
+            self.app.mainloop()
+            logging.info("Додаток вимкнено")
+            try:
+                self.client.close()
+                self.conn.close()
+            except:
+                pass
     def send(self):
         messeg(self.client, self.conn, self.Entry_recipient.get(), self.Entry_text.get(), self.file_path)
         logging.info("повідомлення відправлено")
     def select_file(self):
-        # Відкриває діалогове вікно для вибору файлу
         self.file_path = filedialog.askopenfilename(
             title="Виберіть файл",
             filetypes=(("Усі файли", "*.*"), ("Текстові файли", "*.txt"), ("Фото", "*.bmp"))
         )
         
         if self.file_path:
-            # Оновлюємо текст на кнопці або в Label для відображення шляху
             self.Button_file.configure(text=self.file_path)
     def History(self):
         Text = history(self.conn, self.cursor)
@@ -146,21 +142,7 @@ class Play:
             self.label.configure(text="користувач з таким ім'ям вже існує будьласка ведіть нове ім'я")
             logging.warning("Підключення до серверу не вдалося причина таке ім'я вже існує")
     def main(self):
-        self.entry.pack_forget()
-        self.button.pack_forget()
-        self.radio_element_color_green.pack_forget()
-        self.radio_element_color_yellow.pack_forget()
-        self.radio_element_color_blue.pack_forget()
-        self.radio_element_color_white.pack_forget()
-        self.radio_element_color_black.pack_forget()
-        
-        self.radio_fon_color_green.pack_forget()
-        self.radio_fon_color_yellow.pack_forget()
-        self.radio_fon_color_blue.pack_forget()
-        self.radio_fon_color_white.pack_forget()
-        self.radio_fon_color_black.pack_forget()
-
-        self.Button_color.pack_forget()
+        self.cleaning()
         
         self.Entry_recipient.pack(pady=(0, 10))
         self.Entry_text.pack(pady=(0, 10))
@@ -213,6 +195,9 @@ class Play:
 
         self.main()
     def cleaning(self):
+        self.entry.pack_forget()
+        self.button.pack_forget()
+        
         self.radio_element_color_green.pack_forget()
         self.radio_element_color_yellow.pack_forget()
         self.radio_element_color_blue.pack_forget()
@@ -246,6 +231,6 @@ class Play:
         self.Button_send.configure(fg_color=self.buton_color, text_color=self.text_color_element.get())
         self.Button_setings.configure(fg_color=self.buton_color, text_color=self.text_color_element.get())
 
-play = Play()
-play.Start()
-#app.mainloop()
+if __name__ == "__main__":
+    play = Play()
+    play.Start()
